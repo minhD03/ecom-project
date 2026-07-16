@@ -43,7 +43,7 @@ In my architecture, Dagster first check for input environment to verify user put
 - Below is the row counts for each table:
 ![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/result.jpg)
 
-## 4) Code Structure:
+## 4) Code Structure
 
 ```
 .
@@ -65,15 +65,15 @@ In my architecture, Dagster first check for input environment to verify user put
 │       └── tasks.py            # plain business logic, no Dagster imports (unit-testable).
 └── ecom_dbt/
     ├── dbt_project.yml
-    ├── profiles.yml            # Snowflake connection, reads from env vars
+    ├── profiles.yml            # Snowflake connection, reads from env vars.
     ├── macros/
-    │   └── not_mostly_null.sql # custom data quality test
+    │   └── not_mostly_null.sql # custom data quality test.
     └── models/
         ├── raw/                # ephemeral - 1:1 source() reads, never persisted
         ├── dim/                # dimension tables: customers, product_category_name_translation, seller along with schema.
         └── fact/               # fact tables: order_items, order_payments, order_reviews, orders, products along with schema
 ```
-## 5) Tech Stack:
+## 5) Tech Stack
 
 **Dagster** — The orchestrator tying every stage together into one dependency graph, from environment validation through S3 ingestion, the Spark load, and the dbt build. Instead of running scripts manually in sequence, Dagster lets the whole pipeline execute (be monitored, retried, and alerted on) as a single "Materialize all" click, which is what makes this a *pipeline* rather than a collection of scripts.
 
@@ -90,7 +90,7 @@ In my architecture, Dagster first check for input environment to verify user put
 **Slack** — Closes the loop on observability. Rather than needing to check Dagit to know whether a run succeeded, ingestion summaries and transform-complete notifications land directly in a channel — which matters most exactly when you're *not* watching the pipeline run.
 
 
-## 6) Start guide:
+## 6) Start guide
 ### a) Prerequisites
 - Docker + Docker Compose.
 - An AWS S3 bucket with read/write credentials.
