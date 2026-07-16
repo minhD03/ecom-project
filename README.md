@@ -24,14 +24,14 @@ data from A to B.
 ## 2) Source Data
 
 The source is a dataset about E-commerce with 8 tables, modeled as follows:
-![alt text](https://github.com/minhD03/ecom-project/blob/ac6a3a15739bf66a2ac6d0a001daf74d8679c450/images/data-model.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/data-model.png)
 
 
 ## 3) Architecture 
 
-![alt text](https://github.com/minhD03/ecom-project/blob/0ac891a3c1902e84f083f7765c1c6e0105a1e920/images/diagram-1.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/diagram-1.png)
 
-![alt text](https://github.com/minhD03/ecom-project/blob/0ac891a3c1902e84f083f7765c1c6e0105a1e920/images/diagram-2.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/diagram-2.png)
 
 In my architecture, Dagster first check for input environment to verify user put enough credentials as input, followed by checking the location of raw data before processing. Then, it will read the 8 CSVs and upload to Amazon S3 Server. On success, it will send a slack message as notification.
 
@@ -41,7 +41,7 @@ In my architecture, Dagster first check for input environment to verify user put
 - **fact_products**: rename the column names from "length" to "length", only select the columns where the product_category_name is not null.
 - Most of the tables were tested with not null and unique conditions. Howver, for fact_orders and fact_products, i tested with a row where more than half of the columns are null. These datasets were contributed meaningfully as long as the rest of information (except unique_id) were not null.
 - Below is the row counts for each table:
-![alt text](https://github.com/minhD03/ecom-project/blob/0ac891a3c1902e84f083f7765c1c6e0105a1e920/images/result.jpg)
+![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/result.jpg)
 
 ## 4) Code Structure:
 
@@ -129,8 +129,8 @@ docker compose up -d --build
 
 - Accees http://localhost:3000 and go to Jobs => ecom_pipeline => Materialize all and wait for the process to be done.
 - You will see a Slack notification similar to this:
-![alt text](https://github.com/minhD03/ecom-project/blob/0ac891a3c1902e84f083f7765c1c6e0105a1e920/images/result-1.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/result-1.png)
 
-![alt text](https://github.com/minhD03/ecom-project/blob/0ac891a3c1902e84f083f7765c1c6e0105a1e920/images/result-4.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/result-4.png)
 
 - Go to Power BI and import the data into there.
