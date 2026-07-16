@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: fact_orders
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: order_delivered_customer_date
+        tests:
+          - not_half_null
+
+  - name: fact_order_items
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+
+  - name: fact_order_payments
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+
+  - name: fact_order_reviews
+    columns:
+      - name: review_id
+        tests:
+          - not_null
+
+  - name: fact_products
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+      - name: product_weight_g
+        tests:
+          - not_half_null

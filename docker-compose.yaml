@@ -1,0 +1,121 @@
+name: ecom_project
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 8s
+      retries: 5
+    networks:
+      - dagster
+
+  dagster_codeserver:
+    image: dagster-codeserver
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: dagster_codeserver
+    env_file:
+      - path: ./.env
+    expose:
+      - "4000"
+    ports:
+      - 4000:4000
+    networks:
+      - dagster
+    volumes:
+      - ./data/raw:/opt/dagster/data/raw
+      - ./ecom_dbt:/opt/dagster/app/ecom_dbt
+
+  dagster_webserver:
+    image: dagster-webserver
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: dagster_webserver
+    entrypoint: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000", "-w", "/opt/dagster/dagster_home/workspace.yaml"]
+    expose:
+      - "3000"
+    ports:
+      - 3000:3000
+    env_file:
+      - path: ./.env
+    environment:
+      - DAGSTER_POSTGRES_USER=postgres
+      - DAGSTER_POSTGRES_PASSWORD=postgres
+      - DAGSTER_POSTGRES_DB=postgres
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/io_manager_storage:/tmp/io_manager_storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dagster_codeserver:
+        condition: service_started
+    networks:
+      - dagster
+
+  dagster-daemon:
+    image: dagster-daemon
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: dagster_daemon
+    entrypoint: ["dagster-daemon", "run", "-w", "/opt/dagster/dagster_home/workspace.yaml"]
+    env_file:
+      - path: ./.env
+    environment:
+      DAGSTER_POSTGRES_USER: "postgres"
+      DAGSTER_POSTGRES_PASSWORD: "postgres"
+      DAGSTER_POSTGRES_DB: "postgres"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/io_manager_storage:/tmp/io_manager_storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dagster_codeserver:
+        condition: service_started
+    networks:
+      - dagster
+
+  spark-master:
+    image: apache/spark:3.5.0
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    networks:
+      - dagster
+
+  spark-worker:
+    image: apache/spark:3.5.0
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    depends_on:
+      - spark-master
+    networks:
+      - dagster
+
+volumes:
+  postgres-db-volume:
+
+networks:
+  dagster:
+    driver: bridge

@@ -1,0 +1,19 @@
+[project]
+name = "ecom"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "dagster-dbt>=0.26.13",
+    "dagster>=1.10.13",
+    "dbt-core>=1.9.4",
+    "dbt-snowflake>=1.9.4",
+    "dagster-webserver>=1.10.13",
+    "dagster-graphql>=1.13.13",
+    "dagster-postgres>=0.29.13",
+    "dagster-docker>=0.29.13",
+    "dagster-aws>=0.29.13",
+    "boto3>=1.43.46",
+    "requests>=2.34.2",
+]

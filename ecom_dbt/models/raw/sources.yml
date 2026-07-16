@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw
+    database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+    schema: "{{ env_var('SNOWFLAKE_SCHEMA') }}"   # RAW - written by the Spark load job
+    tables:
+      - name: CUSTOMERS
+      - name: ORDERS
+      - name: ORDER_ITEMS
+      - name: ORDER_PAYMENTS
+      - name: ORDER_REVIEWS
+      - name: PRODUCTS
+      - name: SELLERS
+      - name: PRODUCT_CATEGORY_NAME_TRANSLATION

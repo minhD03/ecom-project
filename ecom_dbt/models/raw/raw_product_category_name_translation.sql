@@ -1,0 +1,1 @@
+select * from {{ source('raw', 'PRODUCT_CATEGORY_NAME_TRANSLATION') }}
