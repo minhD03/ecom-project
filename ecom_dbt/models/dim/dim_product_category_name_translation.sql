@@ -1,1 +1,0 @@
-select * from {{ ref('raw_product_category_name_translation') }}

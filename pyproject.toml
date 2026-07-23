@@ -16,4 +16,5 @@ dependencies = [
     "dagster-aws>=0.29.13",
     "boto3>=1.43.46",
     "requests>=2.34.2",
+    "click>=8.4.2",
 ]

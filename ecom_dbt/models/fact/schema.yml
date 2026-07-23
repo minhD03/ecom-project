@@ -1,40 +1,56 @@
-version: 2
-
 models:
-  - name: fact_orders
+  - name: fact_order_items
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - order_item_id
+            - product_id
+            - seller_id
+            - shipping_limit_date
+            - price
+            - freight_value
     columns:
-      - name: order_id
+      - name: order_item_sk
         tests:
           - unique
           - not_null
-      - name: order_delivered_customer_date
-        tests:
-          - not_half_null
-
-  - name: fact_order_items
-    columns:
       - name: order_id
         tests:
           - not_null
 
   - name: fact_order_payments
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - payment_sequential
+            - payment_type
+            - payment_installments
+            - payment_value
     columns:
+      - name: order_payment_sk
+        tests: 
+          - unique
+          - not_null
       - name: order_id
         tests:
           - not_null
 
   - name: fact_order_reviews
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - review_id
+            - order_id
+            - review_score
+            - review_creation_date
+            - review_answer_timestamp
     columns:
-      - name: review_id
-        tests:
-          - not_null
-
-  - name: fact_products
-    columns:
-      - name: product_id
+      - name: order_review_sk
         tests:
           - unique
           - not_null
-      - name: product_weight_g
+      - name: review_id
         tests:
-          - not_half_null
+          - not_null

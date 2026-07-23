@@ -18,7 +18,7 @@ seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
-clean-targets:         # directories to be removed by `dbt clean`
+clean-targets:         
   - "target"
   - "dbt_packages"
 
@@ -39,4 +39,4 @@ models:
     dim:
       +materialized: table
     fact:
-      +materialized: table
+      +materialized: incremental

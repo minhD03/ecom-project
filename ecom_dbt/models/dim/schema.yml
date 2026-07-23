@@ -1,29 +1,98 @@
-version: 2
-
 models:
-  - name: dim_customers
+  - name: dim_customer
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - customer_id
+            - customer_address_id
     columns:
-      - name: customer_id
+      - name: customer_sk
         tests:
           - unique
           - not_null
-      - name: customer_city
+      - name: customer_id
         tests:
           - not_null
 
-  - name: dim_seller
+  - name: dim_customer_address
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - customer_address_id
+            - customer_zip_code_prefix
+            - customer_city
+            - customer_state
     columns:
+      - name: customer_address_sk
+        tests:
+          - unique
+          - not_null
+      - name: customer_address_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_seller
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - seller_id
+            - seller_zip_code_prefix
+            - seller_city
+            - seller_state
+    columns:
+      - name: seller_sk
+        tests:
+          - unique
+          - not_null
       - name: seller_id
         tests:
           - unique
           - not_null
-      - name: seller_city
-        tests:
-          - not_null
 
-  - name: dim_product_category_name_translation
+  - name: dim_products
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - product_id
+            - product_category_name
+            - product_name_length
+            - product_description_length
+            - product_photos_qty
+            - product_weight_g
+            - product_length_cm
+            - product_height_cm
+            - product_width_cm
     columns:
-      - name: product_category_name
+      - name: product_sk
         tests:
           - unique
+          - not_null
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+      - name: product_category_name
+        tests:
+          - not_null
+  
+  - name: dim_orders
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - customer_id
+            - order_status
+            - order_purchase_timestamp
+            - order_approved_at
+            - order_delivered_carrier_date
+            - order_delivered_customer_date
+            - order_estimated_delivery_date
+    columns:
+      - name: order_sk
+        tests:
+          - unique
+          - not_null    
+      - name: order_id
+        tests:
           - not_null
