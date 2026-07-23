@@ -6,8 +6,9 @@
 - [2) Source Data](#2-source-data)
 - [3) Architecture](#3-architecture)
 - [4) Code Structure](#4-code-structure)
-- [5) Tech Stack](#5-tech-stack)
-- [6) Start Guide](#6-start-guide)
+- [5) Data Anomalies Disclaimer](#5-data-anomalies-disclaimer)
+- [6) Tech Stack](#6-tech-stack)
+- [7) Start Guide](#7-start-guide)
 
 ## 1) Introduction
 
@@ -24,24 +25,33 @@ data from A to B.
 ## 2) Source Data
 
 The source is a dataset about E-commerce with 8 tables, modeled as follows:
-![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/data-model.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/data-model.png)
+
+After Transformation, this is my data model:
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/data-model-1.png)
 
 
 ## 3) Architecture 
 
-![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/diagram-1.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/diagram-1.png)
 
-![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/diagram-2.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/diagram-2.png)
 
-In my architecture, Dagster first check for input environment to verify user put enough credentials as input, followed by checking the location of raw data before processing. Then, it will read the 8 CSVs and upload to Amazon S3 Server. On success, it will send a slack message as notification.
+In my architecture, Dagster first check for input environment to verify user put enough credentials as input, followed by checking the location of raw data before processing. Then, it will read the 8 CSVs and upload to Amazon S3 Server. On success, it will send a slack message as notification. The surrogate key is the an artificial row id that is created to record changes on some entity in a table (for example order_id). In this code, every column will contribute directly into hashing surrogate key to ensure uniqueness. These are my transformation specifically.
 
-- **dim_customers, dim_product_name_category_name_translate, dim_seller**: No changes were made.
-- **fact_order_items, fact_order_payments, fact_orders**: Set the data as incremental to just updates the new entries every following runs.
-- **fact_order_reviews**: select these columns only: review_id, order_i, review_score, review_creation_date, review_answer_timestamp.
-- **fact_products**: rename the column names from "length" to "length", only select the columns where the product_category_name is not null.
-- Most of the tables were tested with not null and unique conditions. Howver, for fact_orders and fact_products, i tested with a row where more than half of the columns are null. These datasets were contributed meaningfully as long as the rest of information (except unique_id) were not null.
+- **dim_customers**: This was splitted into dim_customer that contains customer_id (customer_unique_id from raw.customers) and customer_address_id (customer_id from raw.customers) and dim_customer_address that contains customer_address_id (customer_id from raw.customers), customer_zip_code_prefix, customer_city and customer_state. Both are added with Surrogate key.
+- **dim_orders**: Add Surrogate Key. Set materialized type to Incremental.
+- **dim_products**: Merge with raw_product_category_name_translation. Some special categories are "raw_product_category_name_translation" (meaning "portable kitchen appliances and food preparers") and pc_gamer (keep the same) that did not appeared in English Translation. These are exceptionally handled.
+- **dim_seller**: Create Surrogate Key.
+- **fact_order_items**: For easier Power BI calculation, I took customer_id from raw_orders and added to this table. Create Surrogate Key and set materialized type to Incremental.
+- **fact_order_payment**: Add Surrogate Key and set materialized type to Incremental.
+- **fact_order_reviews**: Take these columns only review_id, order_id, review_score, review_creation_date, review_answer_timestamp. Add Surrogate Key and set materialized type to Incremental.
+- Applied dbt.utils to Generate Surrogate Key and Check for combination of columns for duplicates.
+
+
+  
 - Below is the row counts for each table:
-![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/result.jpg)
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/result.jpg)
 
 ## 4) Code Structure
 
@@ -70,10 +80,23 @@ In my architecture, Dagster first check for input environment to verify user put
     │   └── not_mostly_null.sql # custom data quality test.
     └── models/
         ├── raw/                # ephemeral - 1:1 source() reads, never persisted
-        ├── dim/                # dimension tables: customers, product_category_name_translation, seller along with schema.
-        └── fact/               # fact tables: order_items, order_payments, order_reviews, orders, products along with schema
+        ├── dim/                # dimension tables: customers, product_category_name_translation, seller, etc along with schema.
+        └── fact/               # fact tables: order_items, order_payments, order_reviews, etc along with schema
 ```
-## 5) Tech Stack
+
+
+## 5) Data Anomalies Disclaimer
+
+These are some data Anomalies that has been found inside the source:
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/anomaly-1.png)
+
+In Order Reviews, some order_id has multiple reviews, followed by some updates in review score. I will keep these rows to ensure objectivity in my visualization.
+
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/anomaly-2.png)
+
+In some Orders, the total payment values are different from total price of all items. This could be caused by some other factors such as shipping cost, tax, extra services, etc. Similarly, I will keep these values to ensure objectivity in my visualization.
+
+## 6) Tech Stack
 
 **Dagster** — The orchestrator tying every stage together into one dependency graph, from environment validation through S3 ingestion, the Spark load, and the dbt build. Instead of running scripts manually in sequence, Dagster lets the whole pipeline execute (be monitored, retried, and alerted on) as a single "Materialize all" click, which is what makes this a *pipeline* rather than a collection of scripts.
 
@@ -90,7 +113,7 @@ In my architecture, Dagster first check for input environment to verify user put
 **Slack** — Closes the loop on observability. Rather than needing to check Dagit to know whether a run succeeded, ingestion summaries and transform-complete notifications land directly in a channel — which matters most exactly when you're *not* watching the pipeline run.
 
 
-## 6) Start guide
+## 7) Start guide
 ### a) Prerequisites
 - Docker + Docker Compose.
 - An AWS S3 bucket with read/write credentials.
@@ -129,8 +152,8 @@ docker compose up -d --build
 
 - Accees http://localhost:3000 and go to Jobs => ecom_pipeline => Materialize all and wait for the process to be done.
 - You will see a Slack notification similar to this:
-![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/result-1.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/result-1.png)
 
-![alt text](https://github.com/minhD03/ecom-project/blob/806df293f9913d8e2ab5051fd2079950c1ea490f/images/result-4.png)
+![alt text](https://github.com/minhD03/ecom-project/blob/f441ad03672fd8b617aa6493023feec45a10359a/images/result-4.png)
 
 - Go to Power BI and import the data into there.
